@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Interaktif Kelas 10</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Latar belakang lebih lembut */
+        }
+        .quiz-container {
+            transition: all 0.3s ease-in-out;
+        }
+        .btn {
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-primary {
+            background-color: #3b82f6; /* Biru */
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        .btn-secondary {
+            background-color: #6b7280; /* Abu-abu */
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+        .btn-green {
+            background-color: #10b981; /* Hijau */
+            color: white;
+        }
+        .btn-green:hover {
+            background-color: #059669;
+        }
+        .btn-red {
+            background-color: #ef4444; /* Merah */
+            color: white;
+        }
+        .btn-red:hover {
+            background-color: #dc2626;
+        }
+        .answer-option {
+            border: 1px solid #e5e7eb; /* Batas abu-abu muda */
+            background-color: white;
+        }
+        .answer-option:hover {
+            background-color: #f9fafb; /* Sedikit lebih gelap saat hover */
+            border-color: #d1d5db;
+        }
+        .answer-option.selected {
+            border-color: #3b82f6; /* Biru saat dipilih */
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+        }
+        .answer-option.correct {
+            background-color: #d1fae5; /* Hijau muda untuk jawaban benar */
+            border-color: #10b981;
+        }
+        .answer-option.incorrect {
+            background-color: #fee2e2; /* Merah muda untuk jawaban salah */
+            border-color: #ef4444;
+        }
+        .progress-bar-bg {
+            background-color: #e5e7eb;
+        }
+        .progress-bar-fill {
+            background-color: #3b82f6;
+            transition: width 0.3s ease-in-out;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem; /* Lebih bulat */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        /* Animasi untuk memunculkan elemen */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div id="quizSelectionScreen" class="w-full max-w-md text-center card p-8 fade-in">
+        <h1 class="text-3xl font-bold mb-8 text-gray-800">Pilih Kuis</h1>
+        <div class="space-y-4">
+            <button onclick="startQuiz('PJOK')" class="btn btn-primary w-full py-3 rounded-lg text-lg font-semibold shadow-md">PJOK</button>
+            <button onclick="startQuiz('Pancasila')" class="btn btn-primary w-full py-3 rounded-lg text-lg font-semibold shadow-md">Pendidikan Pancasila</button>
+            <button onclick="startQuiz('Fisika')" class="btn btn-primary w-full py-3 rounded-lg text-lg font-semibold shadow-md">Fisika</button>
+        </div>
+    </div>
+
+    <div id="quizScreen" class="hidden w-full max-w-2xl quiz-container card p-6 sm:p-8">
+        <div class="flex justify-between items-center mb-4">
+            <h2 id="quizTitle" class="text-2xl font-bold text-gray-800"></h2>
+            <div class="text-lg font-semibold text-gray-700">
+                Skor: <span id="score">0</span>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <div class="text-sm text-gray-600 mb-1">Pertanyaan <span id="currentQuestionNumber"></span> dari <span id="totalQuestions"></span></div>
+            <div class="progress-bar-bg w-full h-3 rounded-full">
+                <div id="progressBar" class="progress-bar-fill h-3 rounded-full" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <div id="questionContainer" class="mb-6 fade-in">
+            <p id="questionText" class="text-lg text-gray-700 mb-6 leading-relaxed"></p>
+            <div id="answerOptions" class="space-y-3">
+                </div>
+        </div>
+
+        <div id="feedbackContainer" class="hidden mt-6 p-4 rounded-lg fade-in">
+            <h3 id="feedbackTitle" class="text-xl font-semibold mb-2"></h3>
+            <p id="feedbackRationale" class="text-gray-700"></p>
+        </div>
+
+        <div class="mt-8 flex justify-between items-center">
+            <button onclick="backToSelection()" class="btn btn-secondary py-2 px-4 rounded-lg font-medium">Kembali ke Pilihan</button>
+            <button id="nextButton" onclick="nextQuestion()" class="btn btn-green py-2 px-6 rounded-lg font-semibold hidden">Lanjut</button>
+        </div>
+
+        <div id="quizResultScreen" class="hidden text-center mt-8 fade-in">
+            <h2 class="text-3xl font-bold text-green-600 mb-4">Kuis Selesai!</h2>
+            <p class="text-xl text-gray-700 mb-2">Skor Akhir Anda:</p>
+            <p id="finalScore" class="text-4xl font-bold text-blue-600 mb-6"></p>
+            <button onclick="restartQuiz()" class="btn btn-primary py-3 px-8 rounded-lg text-lg font-semibold shadow-md">Ulangi Kuis Ini</button>
+            <button onclick="backToSelection(true)" class="btn btn-secondary mt-4 py-3 px-8 rounded-lg text-lg font-semibold shadow-md">Pilih Kuis Lain</button>
+        </div>
+    </div>
+
+    <template id="answerOptionTemplate">
+        <button class="answer-option w-full text-left p-4 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <span class="option-text"></span>
+        </button>
+    </template>
+
+    <script>
+        // Data Kuis (diambil dari output sebelumnya)
+        const quizzes = {
+            "PJOK": {
+                title: "Kuis PJOK",
+                questions: [
+                    { question: "Dalam permainan bola basket, operan yang dilakukan dengan memantulkan bola ke lantai untuk menghindari jangkauan lawan yang tinggi disebut...", hint: "Teknik ini menggunakan lantai sebagai 'teman' untuk mengoper bola.", answerOptions: [ { text: "Chest pass", rationale: "Operan ini lurus setinggi dada dan tidak memantul, sehingga mudah dipotong oleh lawan yang tinggi.", isCorrect: false }, { text: "Bounce pass", rationale: "Dengan memantulkan bola ke lantai, lintasan bola menjadi lebih sulit dijangkau oleh lawan yang posturnya lebih tinggi.", isCorrect: true }, { text: "Overhead pass", rationale: "Operan ini dilakukan dari atas kepala, biasanya untuk operan jarak jauh, bukan untuk menghindari hadangan dekat.", isCorrect: false }, { text: "Lay-up shoot", rationale: "Ini adalah teknik untuk menembak bola ke ring dari jarak dekat, bukan teknik mengoper.", isCorrect: false } ] },
+                    { question: "Prinsip FITT dalam penyusunan program kebugaran jasmani merupakan singkatan dari...", hint: "Setiap huruf mewakili salah satu komponen penting dalam merencanakan sebuah latihan.", answerOptions: [ { text: "Fast, Intense, Tough, Training", rationale: "Meskipun latihan bisa jadi cepat dan berat, ini bukan merupakan akronim dari prinsip dasar penyusunan program latihan.", isCorrect: false }, { text: "Frequency, Intensity, Time, Type", rationale: "Akronim ini secara tepat mendefinisikan empat variabel utama yang perlu diatur dalam program latihan untuk mencapai hasil yang efektif.", isCorrect: true }, { text: "Focus, Intention, Target, Test", rationale: "Fokus dan target adalah bagian dari motivasi, tetapi bukan merupakan variabel teknis dalam prinsip dasar latihan FITT.", isCorrect: false }, { text: "Fitness, Improvement, Talent, Technique", rationale: "Ini adalah aspek-aspek yang berhubungan dengan kebugaran secara umum, tetapi bukan merupakan prinsip penyusunan program latihannya.", isCorrect: false } ] },
+                    { question: "Seorang pemain sepak bola menendang bola dengan bagian tengah kakinya mengenai tepat di bagian tengah bola. Apa hasil yang paling mungkin dari tendangan ini?", hint: "Pikirkan tentang bagaimana kontak pada titik pusat bola akan mempengaruhi gerakannya.", answerOptions: [ { text: "Bola akan melambung tinggi.", rationale: "Untuk membuat bola melambung, tendangan biasanya mengenai bagian bawah bola untuk memberikan efek angkat.", isCorrect: false }, { text: "Bola akan bergerak lurus dan mendatar dengan kencang.", rationale: "Mengenai bagian tengah bola secara tepat akan mentransfer energi secara maksimal dalam arah lurus ke depan.", isCorrect: true }, { text: "Bola akan berputar menyamping (melengkung).", rationale: "Tendangan melengkung (efek pisang) dihasilkan dengan mengenai sisi bola, bukan bagian tengahnya.", isCorrect: false }, { text: "Bola akan bergulir pelan.", rationale: "Jika tendangan dilakukan dengan kekuatan, mengenai bagian tengah bola akan menghasilkan laju yang kencang, bukan pelan.", isCorrect: false } ] },
+                    { question: "Dalam permainan bola voli, apa tujuan utama dari seorang 'tosser' atau 'setter'?", hint: "Posisi ini adalah 'otak' dari serangan tim.", answerOptions: [ { text: "Melakukan servis untuk memulai permainan.", rationale: "Semua pemain bisa melakukan servis, ini bukan tugas spesifik dari seorang tosser.", isCorrect: false }, { text: "Menerima pukulan 'spike' dari lawan.", rationale: "Menerima serangan biasanya merupakan tugas utama dari pemain bertahan atau 'libero'.", isCorrect: false }, { text: "Memberikan umpan yang ideal bagi 'spiker' untuk menyerang.", rationale: "Peran utama tosser adalah mengatur serangan dengan memberikan umpan matang kepada pemukul agar dapat mencetak poin.", isCorrect: true }, { text: "Melakukan 'block' untuk menahan serangan lawan.", rationale: "Meskipun tosser bisa melakukan block, tugas utamanya adalah mengatur serangan, bukan bertahan di net.", isCorrect: false } ] },
+                    { question: "Sikap menghargai lawan, menerima kekalahan dengan lapang dada, dan mematuhi aturan permainan adalah cerminan dari nilai...", hint: "Istilah ini sering disebut juga sebagai sportivitas.", answerOptions: [ { text: "Agresivitas", rationale: "Agresivitas dalam olahraga lebih merujuk pada gaya bermain yang menyerang, bukan pada sikap etis terhadap lawan.", isCorrect: false }, { text: "Kompetitif", rationale: "Sikap kompetitif adalah keinginan untuk menang, namun tidak selalu mencakup aspek etika dan penghargaan terhadap lawan.", isCorrect: false }, { text: "Dominasi", rationale: "Dominasi adalah tentang menguasai permainan, yang bisa saja dicapai dengan cara-cara yang tidak sportif.", isCorrect: false }, { text: "Fair play", rationale: "Fair play atau sportivitas adalah inti dari etika olahraga yang mencakup kejujuran, rasa hormat, dan kepatuhan pada aturan.", isCorrect: true } ] },
+                    { question: "Kombinasi latihan seperti 'push-up', 'sit-up', dan 'pull-up' secara dominan meningkatkan komponen kebugaran jasmani apa?", hint: "Fokus pada jenis kontraksi otot yang terjadi dan durasinya saat melakukan latihan ini.", answerOptions: [ { text: "Kecepatan dan kelincahan", rationale: "Kecepatan dan kelincahan lebih banyak dilatih melalui lari sprint atau latihan mengubah arah, bukan latihan kekuatan statis.", isCorrect: false }, { text: "Daya tahan kardiovaskular", rationale: "Daya tahan kardiovaskular (jantung dan paru-paru) lebih efektif dilatih dengan aktivitas aerobik seperti berlari atau berenang.", isCorrect: false }, { text: "Kekuatan dan daya tahan otot", rationale: "Latihan-latihan ini memaksa otot untuk menahan beban tubuh berulang kali, yang secara langsung membangun kekuatan dan daya tahan otot.", isCorrect: true }, { text: "Kelentukan (fleksibilitas)", rationale: "Kelentukan dilatih melalui gerakan peregangan untuk memperluas jangkauan gerak sendi, bukan latihan kekuatan.", isCorrect: false } ] },
+                    { question: "Seorang pemain bola basket melakukan 'lay-up'. Gerakan ini merupakan kombinasi dari...", hint: "Gerakan ini melibatkan perpindahan tempat sambil membawa bola menuju ring.", answerOptions: [ { text: "Menggiring dan mengoper", rationale: "Gerakan ini diakhiri dengan tembakan ke ring, bukan operan ke teman.", isCorrect: false }, { text: "Melompat dan melakukan 'block'", rationale: "Block adalah gerakan bertahan untuk menghalau tembakan lawan, bukan untuk menyerang.", isCorrect: false }, { text: "Menggiring, melompat, dan menembak", rationale: "Proses lay-up secara khas melibatkan dribble mendekati ring, diikuti dengan lompatan dan melepaskan bola ke papan atau ring.", isCorrect: true }, { text: "Mengoper dan menangkap bola", rationale: "Lay-up adalah aksi individu untuk mencetak skor, bukan pertukaran bola dengan rekan satu tim.", isCorrect: false } ] },
+                    { question: "Faktor utama yang membedakan jalan cepat dengan lari adalah...", hint: "Perhatikan kontak kaki dengan tanah pada kedua aktivitas tersebut.", answerOptions: [ { text: "Kecepatan gerakannya", rationale: "Meskipun lari umumnya lebih cepat, atlet jalan cepat bisa lebih cepat dari pelari rekreasi. Ini bukan pembeda utamanya.", isCorrect: false }, { text: "Ayunan lengan yang lebih kuat pada lari", rationale: "Ayunan lengan pada jalan cepat juga sangat kuat untuk menjaga momentum, jadi ini bukan pembeda fundamental.", isCorrect: false }, { text: "Tidak adanya fase melayang di udara pada jalan cepat", rationale: "Aturan fundamental jalan cepat adalah salah satu kaki harus selalu menyentuh tanah, sedangkan lari memiliki fase melayang di udara.", isCorrect: true }, { text: "Jarak yang ditempuh", rationale: "Baik jalan cepat maupun lari memiliki berbagai nomor perlombaan dengan jarak yang bervariasi.", isCorrect: false } ] },
+                    { question: "Mengapa pemanasan (warming-up) penting dilakukan sebelum berolahraga berat?", hint: "Pikirkan tentang kesiapan tubuh untuk melakukan aktivitas yang lebih intensif.", answerOptions: [ { text: "Untuk menghabiskan energi agar tidak terlalu lelah saat latihan inti.", rationale: "Tujuan pemanasan adalah mempersiapkan energi, bukan menghabiskannya sebelum latihan utama.", isCorrect: false }, { text: "Meningkatkan suhu tubuh dan aliran darah ke otot untuk mencegah cedera.", rationale: "Pemanasan secara fisiologis mempersiapkan otot dan sistem kardiovaskular untuk aktivitas berat, sehingga mengurangi risiko cedera.", isCorrect: true }, { text: "Agar detak jantung langsung mencapai titik maksimal.", rationale: "Pemanasan bertujuan menaikkan detak jantung secara bertahap, bukan melonjak secara tiba-tiba yang justru berbahaya.", isCorrect: false }, { text: "Untuk mematuhi peraturan dasar dalam semua cabang olahraga.", rationale: "Meskipun menjadi aturan, alasan utamanya bersifat fisiologis untuk keamanan dan performa tubuh, bukan sekadar formalitas.", isCorrect: false } ] },
+                    { question: "Dalam konteks pola hidup sehat, manakah yang paling akurat menggambarkan hubungan antara aktivitas fisik dan kesehatan mental?", hint: "Aktivitas fisik dapat memicu pelepasan zat kimia tertentu di otak.", answerOptions: [ { text: "Aktivitas fisik hanya berpengaruh pada kesehatan fisik dan tidak berhubungan dengan kesehatan mental.", rationale: "Penelitian secara konsisten menunjukkan adanya hubungan kuat antara kesehatan fisik dan mental.", isCorrect: false }, { text: "Aktivitas fisik dapat mengurangi stres dengan cara melepaskan hormon endorfin.", rationale: "Endorfin yang dilepaskan saat berolahraga dikenal sebagai 'hormon bahagia' yang dapat meningkatkan suasana hati dan mengurangi persepsi rasa sakit.", isCorrect: true }, { text: "Semakin berat aktivitas fisik, semakin besar pula tingkat stres seseorang.", rationale: "Aktivitas fisik yang teratur justru cenderung mengurangi stres, kecuali jika dilakukan secara berlebihan (overtraining).", isCorrect: false }, { text: "Kesehatan mental hanya dapat ditingkatkan melalui meditasi, bukan olahraga.", rationale: "Meskipun meditasi sangat bermanfaat, olahraga adalah cara lain yang sangat efektif untuk meningkatkan kesehatan mental.", isCorrect: false } ] }
+                ]
+            },
+            "Pancasila": {
+                title: "Kuis Pendidikan Pancasila",
+                questions: [
+                    { question: "Pancasila secara resmi disahkan sebagai dasar negara Indonesia oleh PPKI pada tanggal...", hint: "Pengesahan ini terjadi satu hari setelah Proklamasi Kemerdekaan Indonesia.", answerOptions: [ { text: "1 Juni 1945", rationale: "Pada tanggal ini, Soekarno pertama kali mengemukakan konsep awal Pancasila dalam pidatonya, ini adalah hari lahirnya istilah Pancasila.", isCorrect: false }, { text: "22 Juni 1945", rationale: "Tanggal ini merujuk pada perumusan Piagam Jakarta, yang merupakan cikal bakal Pembukaan UUD 1945, bukan pengesahan dasar negara.", isCorrect: false }, { text: "17 Agustus 1945", rationale: "Ini adalah tanggal Proklamasi Kemerdekaan Indonesia, bukan tanggal pengesahan konstitusi atau dasar negara.", isCorrect: false }, { text: "18 Agustus 1945", rationale: "Pada sidang PPKI tanggal 18 Agustus 1945, UUD 1945 disahkan, dan di dalam pembukaannya tercantum Pancasila sebagai dasar negara.", isCorrect: true } ] },
+                    { question: "Jika terjadi pertentangan antara sebuah Undang-Undang dengan UUD NRI Tahun 1945, lembaga negara yang berwenang mengujinya adalah...", hint: "Lembaga ini berfungsi sebagai 'penjaga konstitusi'.", answerOptions: [ { text: "Majelis Permusyawaratan Rakyat (MPR)", rationale: "MPR berwenang mengubah dan menetapkan UUD, tetapi tidak berwenang menguji undang-undang terhadap UUD.", isCorrect: false }, { text: "Dewan Perwakilan Rakyat (DPR)", rationale: "DPR memiliki fungsi legislasi (membentuk UU), anggaran, dan pengawasan, bukan fungsi yudisial untuk menguji UU.", isCorrect: false }, { text: "Mahkamah Konstitusi (MK)", rationale: "Salah satu wewenang utama MK adalah melakukan pengujian yudisial (judicial review) terhadap undang-undang yang dianggap bertentangan dengan UUD.", isCorrect: true }, { text: "Mahkamah Agung (MA)", rationale: "MA berwenang menguji peraturan perundang-undangan di bawah undang-undang terhadap undang-undang, bukan menguji UU terhadap UUD.", isCorrect: false } ] },
+                    { question: "Semboyan 'Bhinneka Tunggal Ika' mencerminkan kenyataan bahwa bangsa Indonesia...", hint: "Pikirkan tentang keragaman yang ada di Indonesia dan bagaimana semboyan ini menyatukannya.", answerOptions: [ { text: "Memiliki satu-satunya tujuan untuk menjadi negara maju.", rationale: "Meskipun menjadi negara maju adalah tujuan, semboyan ini lebih menekankan pada aspek persatuan dalam keragaman sosial budaya.", isCorrect: false }, { text: "Terdiri dari beragam suku, agama, dan budaya namun tetap merupakan satu kesatuan.", rationale: "Arti dari 'Berbeda-beda tetapi tetap satu jua' secara langsung menggambarkan realitas keberagaman yang terikat dalam persatuan Indonesia.", isCorrect: true }, { text: "Harus menyeragamkan semua budaya yang ada menjadi satu budaya nasional.", rationale: "Semboyan ini justru menghargai perbedaan sebagai kekayaan, bukan untuk menyeragamkannya.", isCorrect: false }, { text: "Lebih mengutamakan kepentingan golongan daripada kepentingan nasional.", rationale: "Makna 'Tunggal Ika' (satu jua) justru menegaskan bahwa kepentingan nasional berada di atas kepentingan golongan.", isCorrect: false } ] },
+                    { question: "Membayar pajak tepat waktu adalah salah satu bentuk pelaksanaan... sebagai warga negara.", hint: "Tindakan ini merupakan kontribusi wajib yang diatur oleh undang-undang untuk pembiayaan negara.", answerOptions: [ { text: "Hak", rationale: "Hak adalah sesuatu yang kita terima dari negara, seperti hak mendapat pendidikan atau perlindungan.", isCorrect: false }, { text: "Kewajiban", rationale: "Membayar pajak adalah tanggung jawab yang harus dilaksanakan oleh warga negara untuk mendukung pembangunan dan penyelenggaraan negara.", isCorrect: true }, { text: "Peran serta", rationale: "Meskipun membayar pajak adalah bentuk peran serta, istilah yang paling tepat dalam konteks hukum tata negara adalah 'kewajiban'.", isCorrect: false }, { text: "Kehormatan", rationale: "Walaupun bisa dipandang sebagai sebuah kehormatan, status hukumnya adalah kewajiban yang mengikat.", isCorrect: false } ] },
+                    { question: "Penyebaran berita bohong (hoax) yang dapat memicu konflik antar suku atau agama secara langsung bertentangan dengan Pancasila, terutama sila...", hint: "Fokus pada dampak utama dari tindakan tersebut terhadap keutuhan bangsa.", answerOptions: [ { text: "Ketuhanan Yang Maha Esa", rationale: "Meskipun fitnah bertentangan dengan ajaran agama, dampak utamanya dalam konteks ini adalah pada persatuan sosial.", isCorrect: false }, { text: "Kemanusiaan yang adil dan beradab", rationale: "Hoax memang tidak beradab, tetapi ancaman utamanya adalah pada pecahnya ikatan kebangsaan.", isCorrect: false }, { text: "Persatuan Indonesia", rationale: "Hoax yang memecah belah secara langsung menyerang esensi persatuan dan kesatuan bangsa, yang merupakan inti dari Sila Ketiga.", isCorrect: true }, { text: "Keadilan sosial bagi seluruh rakyat Indonesia", rationale: "Ketidakadilan informasi adalah salah satu akibatnya, tetapi akar masalah yang ditentang adalah perpecahan bangsa.", isCorrect: false } ] },
+                    { question: "Hak asasi manusia yang tidak dapat dikurangi dalam keadaan apapun (non-derogable rights) contohnya adalah...", hint: "Pikirkan hak yang paling fundamental dan melekat pada eksistensi manusia itu sendiri.", answerOptions: [ { text: "Hak untuk memiliki properti", rationale: "Dalam keadaan darurat atau untuk kepentingan umum, hak milik dapat dibatasi oleh negara dengan ganti rugi yang layak.", isCorrect: false }, { text: "Hak untuk bebas dari penyiksaan", rationale: "Hak untuk tidak disiksa adalah hak absolut yang tidak boleh dilanggar oleh siapapun, kapanpun, dan dalam kondisi apapun.", isCorrect: true }, { text: "Hak untuk berserikat dan berkumpul", rationale: "Hak ini dapat dibatasi oleh negara demi menjaga ketertiban umum atau keamanan nasional.", isCorrect: false }, { text: "Hak untuk mendapatkan pekerjaan", rationale: "Ini adalah hak ekonomi yang pemenuhannya bergantung pada kondisi dan kemampuan negara, bukan hak absolut.", isCorrect: false } ] },
+                    { question: "Ketika Pancasila berfungsi sebagai 'way of life' atau pandangan hidup bangsa, artinya...", hint: "Fungsi ini berkaitan dengan bagaimana nilai-nilai Pancasila mewarnai kehidupan sehari-hari.", answerOptions: [ { text: "Pancasila menjadi sumber dari segala sumber hukum negara.", rationale: "Ini adalah fungsi Pancasila sebagai dasar negara (filosofische grondslag), bukan sebagai pandangan hidup.", isCorrect: false }, { text: "Nilai-nilai Pancasila menjadi pedoman dalam bertingkah laku.", rationale: "Sebagai pandangan hidup, Pancasila memberikan arahan moral dan etis bagi setiap warga negara dalam kehidupan bermasyarakat.", isCorrect: true }, { text: "Pancasila digunakan sebagai alat dalam hubungan internasional.", rationale: "Ini lebih terkait dengan fungsi Pancasila sebagai ideologi terbuka dalam konteks politik luar negeri.", isCorrect: false }, { text: "Pancasila menjadi satu-satunya ideologi yang boleh dipelajari.", rationale: "Sebagai ideologi terbuka, Pancasila memungkinkan adanya pemikiran lain selama tidak bertentangan dengan nilai-nilai dasarnya.", isCorrect: false } ] },
+                    { question: "Gotong royong sebagai kearifan lokal bangsa Indonesia merupakan perwujudan nyata dari sila...", hint: "Fokus pada nilai kebersamaan dan kerja sama untuk tujuan bersama.", answerOptions: [ { text: "Ketuhanan Yang Maha Esa", rationale: "Sila ini lebih menekankan pada hubungan manusia dengan Tuhan dan toleransi beragama.", isCorrect: false }, { text: "Kemanusiaan yang adil dan beradab", rationale: "Meskipun gotong royong adalah tindakan beradab, esensinya lebih pada persatuan daripada sekadar kemanusiaan.", isCorrect: false }, { text: "Persatuan Indonesia", rationale: "Gotong royong adalah wujud nyata dari semangat persatuan, kebersamaan, dan senasib sepenanggungan dalam masyarakat.", isCorrect: true }, { text: "Kerakyatan yang dipimpin oleh hikmat kebijaksanaan dalam permusyawaratan/perwakilan", rationale: "Sila ini menekankan pada proses pengambilan keputusan (musyawarah), bukan pada aksi kerja sama (gotong royong).", isCorrect: false } ] },
+                    { question: "Menurut UUD NRI Tahun 1945, yang berhak menyatakan perang, membuat perdamaian, dan perjanjian dengan negara lain adalah...", hint: "Kewenangan ini dipegang oleh kepala negara, namun memerlukan persetujuan dari lembaga legislatif.", answerOptions: [ { text: "Panglima TNI", rationale: "Panglima TNI adalah pemimpin militer, tetapi keputusan politik seperti perang dan damai berada di tangan otoritas sipil tertinggi.", isCorrect: false }, { text: "Menteri Luar Negeri", rationale: "Menteri Luar Negeri membantu Presiden dalam hubungan luar negeri, tetapi tidak memegang kewenangan final untuk menyatakan perang.", isCorrect: false }, { text: "Presiden dengan persetujuan DPR", rationale: "Pasal 11 UUD NRI Tahun 1945 secara jelas menyatakan bahwa Presiden memegang kewenangan ini dengan persetujuan dari Dewan Perwakilan Rakyat.", isCorrect: true }, { text: "Dewan Perwakilan Rakyat (DPR) sendiri", rationale: "DPR memberikan persetujuan, tetapi inisiatif dan keputusan akhir untuk menyatakan perang berada di tangan Presiden sebagai kepala negara.", isCorrect: false } ] },
+                    { question: "Wujud bela negara bagi seorang pelajar yang paling relevan adalah...", hint: "Bela negara tidak selalu berarti mengangkat senjata, tetapi sesuai dengan profesi dan kemampuan.", answerOptions: [ { text: "Mengikuti pelatihan militer sejak dini.", rationale: "Pelatihan militer adalah salah satu bentuk, tetapi bukan satu-satunya dan belum tentu yang paling relevan untuk pelajar.", isCorrect: false }, { text: "Belajar dengan tekun untuk meningkatkan kualitas diri dan bangsa.", rationale: "Mengisi kemerdekaan dengan belajar giat untuk membangun bangsa di masa depan adalah bentuk bela negara non-fisik yang sangat penting.", isCorrect: true }, { text: "Mengkritik semua kebijakan pemerintah di media sosial.", rationale: "Kritik yang membangun memang diperlukan, tetapi mengkritik semua kebijakan tanpa dasar bukanlah wujud bela negara.", isCorrect: false }, { text: "Menjadi sukarelawan dalam setiap konflik internasional.", rationale: "Ini adalah tindakan yang mulia tetapi tidak secara langsung merupakan kewajiban bela negara utama bagi seorang pelajar.", isCorrect: false } ] }
+                ]
+            },
+            "Fisika": {
+                title: "Kuis Fisika",
+                questions: [
+                    { question: "Dari kelompok besaran berikut, yang seluruhnya merupakan besaran pokok dalam Sistem Internasional (SI) adalah...", hint: "Ingat kembali tujuh besaran yang menjadi fondasi bagi besaran-besaran lainnya.", answerOptions: [ { text: "Panjang, massa, kecepatan, waktu", rationale: "Kecepatan adalah besaran turunan karena didefinisikan dari panjang dan waktu (panjang/waktu).", isCorrect: false }, { text: "Massa, waktu, suhu, kuat arus listrik", rationale: "Semua besaran dalam kelompok ini (massa, waktu, suhu, kuat arus) termasuk dalam tujuh besaran pokok SI.", isCorrect: true }, { text: "Gaya, energi, daya, tekanan", rationale: "Semua besaran dalam kelompok ini merupakan besaran turunan yang dijabarkan dari besaran-besaran pokok.", isCorrect: false }, { text: "Waktu, percepatan, jumlah zat, panjang", rationale: "Percepatan adalah besaran turunan karena didefinisikan dari panjang dan waktu (panjang/waktu²).", isCorrect: false } ] },
+                    { question: "Sebuah mobil bergerak ke timur sejauh 80 km, kemudian berbalik arah dan bergerak ke barat sejauh 30 km. Berapakah besar perpindahan mobil tersebut?", hint: "Perpindahan adalah besaran vektor yang memperhatikan posisi awal dan akhir, bukan total jarak yang ditempuh.", answerOptions: [ { text: "110 km", rationale: "Ini adalah total jarak yang ditempuh mobil (80 km + 30 km), bukan perpindahannya.", isCorrect: false }, { text: "80 km", rationale: "Ini hanya merupakan pergerakan pertama mobil, belum memperhitungkan pergerakan baliknya.", isCorrect: false }, { text: "50 km", rationale: "Perpindahan adalah selisih antara posisi akhir dan awal (80 km ke timur - 30 km ke barat), yang menghasilkan 50 km dari titik awal.", isCorrect: true }, { text: "30 km", rationale: "Ini hanya merupakan pergerakan kedua mobil, tidak memperhitungkan posisi awalnya.", isCorrect: false } ] },
+                    { question: "Pada Pembangkit Listrik Tenaga Air (PLTA), urutan transformasi energi yang paling tepat adalah...", hint: "Pikirkan dari mana energi awalnya berasal (air di bendungan) hingga menjadi listrik.", answerOptions: [ { text: "Kinetik -> Potensial -> Mekanik -> Listrik", rationale: "Energi awal air di bendungan adalah potensial (karena ketinggian), bukan kinetik.", isCorrect: false }, { text: "Potensial -> Kinetik -> Mekanik -> Listrik", rationale: "Air di ketinggian memiliki energi potensial, yang berubah menjadi kinetik saat jatuh, lalu memutar turbin (mekanik), dan akhirnya menghasilkan listrik.", isCorrect: true }, { text: "Kimia -> Panas -> Mekanik -> Listrik", rationale: "Urutan ini lebih menggambarkan prinsip kerja Pembangkit Listrik Tenaga Uap (PLTU) yang menggunakan bahan bakar.", isCorrect: false }, { text: "Listrik -> Mekanik -> Kinetik -> Potensial", rationale: "Urutan ini terbalik; ini lebih menyerupai cara kerja pompa air listrik, bukan pembangkit listrik.", isCorrect: false } ] },
+                    { question: "Gas yang paling dominan menjadi penyebab pemanasan global akibat aktivitas manusia adalah...", hint: "Gas ini banyak dihasilkan dari pembakaran bahan bakar fosil seperti bensin dan batu bara.", answerOptions: [ { text: "Oksigen (O2)", rationale: "Oksigen sangat penting untuk pernapasan, tetapi bukan merupakan gas rumah kaca yang signifikan.", isCorrect: false }, { text: "Nitrogen (N2)", rationale: "Nitrogen adalah komponen terbesar di atmosfer, tetapi tidak memiliki efek rumah kaca yang kuat.", isCorrect: false }, { text: "Karbon dioksida (CO2)", rationale: "Peningkatan konsentrasi CO2 di atmosfer akibat aktivitas manusia adalah pendorong utama efek rumah kaca dan pemanasan global.", isCorrect: true }, { text: "Uap air (H2O)", rationale: "Meskipun uap air adalah gas rumah kaca yang kuat, konsentrasinya lebih dipengaruhi oleh siklus air alami daripada langsung oleh aktivitas manusia.", isCorrect: false } ] },
+                    { question: "Seorang siswa mengukur panjang sebuah buku menggunakan penggaris dan melaporkan hasilnya sebagai 25,4 cm. Berapa jumlah angka penting pada hasil pengukuran tersebut?", hint: "Semua angka yang bukan nol selalu dianggap penting.", answerOptions: [ { text: "Satu", rationale: "Ada lebih dari satu angka yang terbaca pada hasil pengukuran ini.", isCorrect: false }, { text: "Dua", rationale: "Angka '4' di belakang koma juga merupakan hasil pembacaan yang signifikan dan harus dihitung.", isCorrect: false }, { text: "Tiga", rationale: "Semua angka (2, 5, dan 4) adalah angka yang diperoleh dari pengukuran dan karenanya semuanya adalah angka penting.", isCorrect: true }, { text: "Empat", rationale: "Tidak ada angka keempat dalam hasil pengukuran yang dilaporkan.", isCorrect: false } ] },
+                    { question: "Panel surya adalah teknologi energi alternatif yang bekerja dengan mengubah energi... menjadi energi listrik.", hint: "Sumber energi utama dari teknologi ini adalah matahari.", answerOptions: [ { text: "Panas (kalor)", rationale: "Meskipun panel surya menjadi panas, prinsip kerjanya adalah efek fotovoltaik yang memanfaatkan partikel cahaya, bukan panas.", isCorrect: false }, { text: "Cahaya (foton)", rationale: "Panel surya atau sel fotovoltaik secara langsung mengkonversi energi dari foton (partikel cahaya) matahari menjadi arus listrik.", isCorrect: true }, { text: "Angin", rationale: "Energi angin dimanfaatkan oleh turbin angin, bukan panel surya.", isCorrect: false }, { text: "Kimia", rationale: "Energi kimia disimpan dalam baterai, tetapi panel surya adalah sumber penghasil energinya, bukan penyimpannya.", isCorrect: false } ] },
+                    { question: "Dimensi dari besaran gaya, yang memiliki satuan SI Newton (kg·m/s²), adalah...", hint: "Jabarkan satuan Newton (kg·m/s²) ke dalam simbol dimensi massa [M], panjang [L], dan waktu [T].", answerOptions: [ { text: "[M][L][T]", rationale: "Dimensi ini tidak sesuai dengan satuan gaya yang memiliki pembagi waktu kuadrat (s²).", isCorrect: false }, { text: "[M][L][T]⁻¹", rationale: "Dimensi ini lebih cocok untuk momentum (massa x kecepatan), bukan gaya (massa x percepatan).", isCorrect: false }, { text: "[M][L][T]⁻²", rationale: "Dimensi ini secara tepat merepresentasikan massa [M] dikalikan panjang [L] dibagi waktu kuadrat [T]², sesuai dengan satuan kg·m/s².", isCorrect: true }, { text: "[M][L]²[T]⁻²", rationale: "Dimensi ini lebih cocok untuk energi atau usaha (gaya x jarak), bukan gaya itu sendiri.", isCorrect: false } ] },
+                    { question: "Sebuah benda jatuh bebas dari ketinggian. Energi apa yang berkurang dan energi apa yang bertambah selama benda tersebut jatuh (sebelum menyentuh tanah)?", hint: "Pikirkan tentang energi yang berkaitan dengan ketinggian dan energi yang berkaitan dengan gerakan.", answerOptions: [ { text: "Energi kinetik berkurang, energi potensial bertambah.", rationale: "Saat jatuh, benda menjadi lebih cepat (kinetik bertambah) dan ketinggiannya berkurang (potensial berkurang).", isCorrect: false }, { text: "Energi potensial berkurang, energi kinetik bertambah.", rationale: "Saat ketinggian berkurang, energi potensialnya berubah menjadi energi kinetik, sehingga kecepatannya bertambah.", isCorrect: true }, { text: "Energi mekanik berkurang, energi kinetik bertambah.", rationale: "Dengan mengabaikan gesekan udara, energi mekanik total (kinetik + potensial) seharusnya tetap konstan.", isCorrect: false }, { text: "Energi potensial dan energi kinetik keduanya bertambah.", rationale: "Energi tidak dapat diciptakan; salah satu bentuk energi harus berkurang agar bentuk energi lain dapat bertambah (prinsip konservasi energi).", isCorrect: false } ] },
+                    { question: "Hasil pengukuran menggunakan jangka sorong dilaporkan sebagai (5,24 ± 0,005) cm. Nilai 0,005 cm dalam laporan ini menunjukkan...", hint: "Istilah ini menggambarkan rentang keraguan dalam sebuah pengukuran.", answerOptions: [ { text: "Nilai skala terkecil (NST) alat", rationale: "Nilai ini adalah setengah dari NST. NST jangka sorong biasanya 0,01 cm.", isCorrect: false }, { text: "Kesalahan sistematis alat", rationale: "Kesalahan sistematis adalah kesalahan yang konsisten (misalnya kesalahan kalibrasi), bukan rentang ketidakpastian acak.", isCorrect: false }, { text: "Ketidakpastian pengukuran", rationale: "Nilai 'plus-minus' dalam laporan pengukuran secara definisi merepresentasikan ketidakpastian dari hasil pengukuran tersebut.", isCorrect: true }, { text: "Hasil rata-rata pengukuran", rationale: "Hasil rata-rata adalah nilai utamanya (5,24 cm), bukan rentang kesalahannya.", isCorrect: false } ] },
+                    { question: "Manakah dari tindakan berikut yang merupakan penerapan konsep fisika untuk mengurangi efek pemanasan global secara langsung?", hint: "Cari tindakan yang secara langsung mengurangi jumlah gas rumah kaca di atmosfer atau mengurangi penyerapan panas.", answerOptions: [ { text: "Membangun tanggul laut yang lebih tinggi.", rationale: "Ini adalah tindakan adaptasi untuk mengatasi dampak kenaikan air laut, bukan mitigasi untuk mengurangi penyebab pemanasan global itu sendiri.", isCorrect: false }, { text: "Mengganti atap rumah berwarna gelap dengan warna terang (putih).", rationale: "Warna terang memantulkan lebih banyak radiasi matahari (albedo tinggi) dibandingkan warna gelap, sehingga mengurangi penyerapan panas. Ini adalah penerapan langsung konsep fisika termal.", isCorrect: true }, { text: "Mengembangkan varietas tanaman yang tahan kekeringan.", rationale: "Ini adalah solusi adaptasi di bidang pertanian terhadap perubahan iklim, bukan tindakan untuk mengurangi pemanasan globalnya.", isCorrect: false }, { text: "Membuat sistem peringatan dini bencana banjir.", rationale: "Ini adalah tindakan adaptasi untuk menghadapi dampak cuaca ekstrem, bukan untuk mengurangi penyebabnya.", isCorrect: false } ] }
+                ]
+            }
+        };
+
+        let currentQuizName = '';
+        let currentQuizData = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answerSelected = false;
+
+        const quizSelectionScreen = document.getElementById('quizSelectionScreen');
+        const quizScreen = document.getElementById('quizScreen');
+        const quizTitleEl = document.getElementById('quizTitle');
+        const scoreEl = document.getElementById('score');
+        const questionTextEl = document.getElementById('questionText');
+        const answerOptionsEl = document.getElementById('answerOptions');
+        const feedbackContainerEl = document.getElementById('feedbackContainer');
+        const feedbackTitleEl = document.getElementById('feedbackTitle');
+        const feedbackRationaleEl = document.getElementById('feedbackRationale');
+        const nextButton = document.getElementById('nextButton');
+        const quizResultScreen = document.getElementById('quizResultScreen');
+        const finalScoreEl = document.getElementById('finalScore');
+        const answerOptionTemplate = document.getElementById('answerOptionTemplate');
+        const progressBar = document.getElementById('progressBar');
+        const currentQuestionNumberEl = document.getElementById('currentQuestionNumber');
+        const totalQuestionsEl = document.getElementById('totalQuestions');
+        const questionContainerEl = document.getElementById('questionContainer');
+
+
+        function startQuiz(quizName) {
+            currentQuizName = quizName;
+            currentQuizData = quizzes[quizName].questions;
+            currentQuestionIndex = 0;
+            score = 0;
+            answerSelected = false;
+
+            quizSelectionScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            quizScreen.classList.add('fade-in');
+            quizResultScreen.classList.add('hidden');
+            questionContainerEl.classList.remove('hidden');
+
+
+            quizTitleEl.textContent = quizzes[quizName].title;
+            scoreEl.textContent = score;
+            totalQuestionsEl.textContent = currentQuizData.length;
+
+            displayQuestion();
+        }
+
+        function displayQuestion() {
+            answerSelected = false;
+            feedbackContainerEl.classList.add('hidden');
+            nextButton.classList.add('hidden');
+            questionContainerEl.classList.remove('fade-in'); // Hapus animasi untuk pertanyaan berikutnya
+            void questionContainerEl.offsetWidth; // Paksa reflow untuk memulai ulang animasi
+            questionContainerEl.classList.add('fade-in');
+
+
+            if (currentQuestionIndex < currentQuizData.length) {
+                const question = currentQuizData[currentQuestionIndex];
+                questionTextEl.textContent = question.question;
+                answerOptionsEl.innerHTML = ''; // Kosongkan opsi sebelumnya
+
+                // Update progress bar
+                const progress = ((currentQuestionIndex + 1) / currentQuizData.length) * 100;
+                progressBar.style.width = `${progress}%`;
+                currentQuestionNumberEl.textContent = currentQuestionIndex + 1;
+
+                question.answerOptions.forEach((option, index) => {
+                    const optionClone = answerOptionTemplate.content.cloneNode(true);
+                    const button = optionClone.querySelector('button');
+                    button.querySelector('.option-text').textContent = option.text;
+                    button.onclick = () => selectAnswer(index, button);
+                    answerOptionsEl.appendChild(optionClone);
+                });
+            } else {
+                showResults();
+            }
+        }
+
+        function selectAnswer(selectedIndex, selectedButton) {
+            if (answerSelected) return; // Hanya izinkan satu jawaban per pertanyaan
+            answerSelected = true;
+
+            const question = currentQuizData[currentQuestionIndex];
+            const correctAnswerIndex = question.answerOptions.findIndex(opt => opt.isCorrect);
+            const isCorrect = selectedIndex === correctAnswerIndex;
+
+            // Tandai semua tombol
+            const optionButtons = answerOptionsEl.querySelectorAll('.answer-option');
+            optionButtons.forEach((btn, idx) => {
+                btn.disabled = true; // Nonaktifkan semua tombol setelah jawaban dipilih
+                if (idx === correctAnswerIndex) {
+                    btn.classList.add('correct');
+                } else if (idx === selectedIndex && !isCorrect) {
+                    btn.classList.add('incorrect');
+                }
+                if (idx === selectedIndex) {
+                    btn.classList.add('selected');
+                }
+            });
+
+
+            if (isCorrect) {
+                score += 10; // Misal skor 10 per jawaban benar
+                scoreEl.textContent = score;
+                feedbackTitleEl.textContent = "BENAR!";
+                feedbackTitleEl.className = 'text-xl font-semibold mb-2 text-green-600';
+            } else {
+                feedbackTitleEl.textContent = "SALAH";
+                feedbackTitleEl.className = 'text-xl font-semibold mb-2 text-red-600';
+            }
+
+            feedbackRationaleEl.textContent = question.answerOptions[selectedIndex].rationale;
+            if (!question.answerOptions[selectedIndex].rationale && isCorrect) {
+                 feedbackRationaleEl.textContent = question.answerOptions[correctAnswerIndex].rationale;
+            } else if (!question.answerOptions[selectedIndex].rationale && !isCorrect) {
+                feedbackRationaleEl.textContent = "Pilihan yang benar adalah: " + question.answerOptions[correctAnswerIndex].text + ". " + question.answerOptions[correctAnswerIndex].rationale;
+            }
+
+
+            feedbackContainerEl.classList.remove('hidden');
+            feedbackContainerEl.classList.remove('fade-in');
+            void feedbackContainerEl.offsetWidth;
+            feedbackContainerEl.classList.add('fade-in');
+
+            nextButton.classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            displayQuestion();
+        }
+
+        function showResults() {
+            questionContainerEl.classList.add('hidden');
+            feedbackContainerEl.classList.add('hidden');
+            nextButton.classList.add('hidden');
+            quizResultScreen.classList.remove('hidden');
+            quizResultScreen.classList.remove('fade-in');
+            void quizResultScreen.offsetWidth;
+            quizResultScreen.classList.add('fade-in');
+
+            finalScoreEl.textContent = score;
+        }
+
+        function restartQuiz() {
+            startQuiz(currentQuizName); // Memulai kembali kuis yang sama
+        }
+
+        function backToSelection(fromResult = false) {
+            quizScreen.classList.add('hidden');
+            quizResultScreen.classList.add('hidden');
+            quizSelectionScreen.classList.remove('hidden');
+            quizSelectionScreen.classList.remove('fade-in');
+            void quizSelectionScreen.offsetWidth;
+            quizSelectionScreen.classList.add('fade-in');
+
+            // Reset progress bar jika kembali dari tengah kuis
+            if (!fromResult) {
+                 progressBar.style.width = `0%`;
+                 currentQuestionNumberEl.textContent = 0;
+            }
+        }
+
+    </script>
+</body>
+</html>
